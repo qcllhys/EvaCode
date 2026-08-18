@@ -1,0 +1,47 @@
+# Python bytecode and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Packaging and test output
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+config.yaml
+*.pem
+*.key
+
+# EvaCode runtime data. Keep only public templates and bundled skills.
+.evacode/*
+!.evacode/config.yaml.example
+!.evacode/skills/
+!.evacode/skills/**
+EVACODE.local.md
+
+# Other assistant-specific local state
+.claude/
+CLAUDE.md
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Node dependencies used by optional MCP servers
+node_modules/
