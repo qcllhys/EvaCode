@@ -26,11 +26,9 @@ config.yaml
 *.pem
 *.key
 
-# EvaCode runtime data. Keep only public templates and bundled skills.
+# EvaCode runtime data. Keep only the public configuration template.
 .evacode/*
 !.evacode/config.yaml.example
-!.evacode/skills/
-!.evacode/skills/**
 EVACODE.local.md
 
 # Other assistant-specific local state

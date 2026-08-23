@@ -1,9 +1,8 @@
-# EvaCode Linux 迁移与部署教程
+# EvaCode Linux 部署指南
 
-本文适用于将 EvaCode 从当前服务器迁移到另一台 Linux 服务器。推荐迁移源码和
-`uv.lock`，然后在目标服务器重新创建虚拟环境。不要直接复制现有 `.venv`，因为其中
-包含原服务器的绝对路径，并且可能与目标服务器的 Linux 发行版、CPU 架构或 Python
-版本不兼容。
+本文适用于在 Linux 环境部署或迁移 EvaCode。推荐发布源码和 `uv.lock`，然后在目标
+环境重新创建虚拟环境。不要直接复制已有 `.venv`，因为其中包含机器相关的绝对路径，
+并且可能与目标环境的 Linux 发行版、CPU 架构或 Python 版本不兼容。
 
 ## 1. 应该保留哪些内容
 
@@ -21,7 +20,6 @@
 | 路径 | 用途 |
 | --- | --- |
 | `.evacode/config.yaml.example` | 配置模板，不包含真实密钥 |
-| `.evacode/skills/` | 当前项目自带的 Skills |
 | `.evacode/agents/`、`.evacode/commands/` | 如果以后添加了自定义 Agent 或命令，需要一起迁移 |
 | `tests/` | 部署后验收和后续开发使用 |
 | `.gitignore` | 防止密钥、缓存和虚拟环境被提交 |
@@ -36,7 +34,7 @@
 
 ### 不建议迁移
 
-以下内容都是缓存、日志或与当前服务器绑定的环境，可以在目标服务器重新生成：
+以下内容都是缓存、日志或与本机绑定的环境，可以在目标服务器重新生成：
 
 - `.venv/`
 - `.pytest_cache/`
@@ -48,9 +46,9 @@
 不要把包含真实 API Key 的 `.evacode/config.yaml` 放进普通压缩包或代码仓库。推荐在
 目标服务器重新创建配置，并通过环境变量提供密钥。
 
-## 2. 在原服务器制作迁移包
+## 2. 制作发布包
 
-在当前服务器执行：
+在源码目录的上一级执行：
 
 ```bash
 cd ~/path/to
@@ -230,15 +228,13 @@ cd ~/workspaces/my-project
 ~/apps/evacode/.venv/bin/evacode
 ```
 
-当前源码附带的 Skills 位于 `~/apps/evacode/.evacode/skills/`。如果希望在所有工作目录
-中使用它们，可以复制到用户级目录：
+自定义 Skill 可以放在用户级目录，使其对所有工作目录可见：
 
 ```bash
 mkdir -p ~/.evacode/skills
-cp -a ~/apps/evacode/.evacode/skills/. ~/.evacode/skills/
 ```
 
-也可以只把需要的 Skill 放入具体项目的 `.evacode/skills/`。
+也可以把项目专用 Skill 放入具体工作目录的 `.evacode/skills/`。
 
 ## 7. 启动方式
 
@@ -367,8 +363,8 @@ python3.11 -m venv ~/apps/evacode-runtime
 ```
 
 这种方式会从 Python 软件源解析并下载依赖，不会严格使用 `uv.lock` 中的版本，因此生产
-部署更推荐前面的源码加 `uv sync --frozen` 方案。wheel 也不会自动携带项目根目录中的
-`.evacode/skills/` 和 `EVACODE.md`，需要时应单独迁移。
+部署更推荐前面的源码加 `uv sync --frozen` 方案。wheel 不会自动携带工作目录中的
+自定义 Skills 和 `EVACODE.md`，需要时应单独迁移。
 
 ## 10. 离线服务器部署
 

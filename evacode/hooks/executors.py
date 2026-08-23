@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import signal
+import subprocess
 from urllib.request import Request, urlopen
 from urllib.error import URLError
 
@@ -13,17 +16,42 @@ log = logging.getLogger(__name__)
 async def execute_command(action: Action, ctx: HookContext) -> ActionResult:
     command = ctx.expand(action.command)
     try:
+        process_options: dict = {}
+        if os.name == "nt":
+            process_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            process_options["start_new_session"] = True
+
         proc = await asyncio.create_subprocess_shell(
             command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            **process_options,
         )
         try:
             stdout, _ = await asyncio.wait_for(
                 proc.communicate(), timeout=action.timeout
             )
         except asyncio.TimeoutError:
-            proc.kill()
+            if os.name == "nt":
+                # Killing cmd.exe alone leaves its children alive and keeps the
+                # inherited stdout pipe open. taskkill /T terminates the entire
+                # process tree so the timeout is effective.
+                killer = await asyncio.create_subprocess_exec(
+                    "taskkill",
+                    "/PID",
+                    str(proc.pid),
+                    "/T",
+                    "/F",
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+                await killer.communicate()
+            else:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
             await proc.wait()
             return ActionResult(
                 output=f"Command timed out after {action.timeout}s: {command}",

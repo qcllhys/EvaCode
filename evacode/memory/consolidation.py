@@ -215,6 +215,31 @@ def _rollback_lock(mem_dir: str, prior_mtime: int) -> None:
 
 
 def _is_process_running(pid: int) -> bool:
+    if pid <= 0:
+        return False
+
+    if os.name == "nt":
+        # ``os.kill(pid, 0)`` is the standard POSIX existence probe, but on
+        # Windows ``os.kill`` is implemented with process termination APIs and
+        # must not be used against the current process. Querying a process
+        # handle is side-effect free and also works for the lock owner itself.
+        import ctypes
+
+        process_query_limited_information = 0x1000
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(
+            process_query_limited_information,
+            False,
+            pid,
+        )
+        if handle:
+            kernel32.CloseHandle(handle)
+            return True
+
+        # Access denied still means that the process exists; it is merely
+        # owned by another security context.
+        return kernel32.GetLastError() == 5
+
     try:
         os.kill(pid, 0)
         return True
